@@ -19,7 +19,7 @@ echo
 CURRENTDIR=`pwd`
 default_svnpath="/tmp/$PLUGINSLUG"
 default_svnurl="https://plugins.svn.wordpress.org/$PLUGINSLUG"
-default_svnuser="GaryJ"
+default_svnuser="alpipego"
 default_plugindir="$CURRENTDIR/$PLUGINSLUG"
 default_mainfile="$PLUGINSLUG.php"
 
@@ -77,11 +77,11 @@ GITPATH="$PLUGINDIR/" # this file should be in the base of your git repository
 
 # Let's begin...
 echo ".........................................."
-echo 
+echo
 echo "Preparing to deploy WordPress plugin"
-echo 
+echo
 echo ".........................................."
-echo 
+echo
 
 # Check version in readme.txt is the same as plugin file after translating both to unix line breaks to work around grep's failure to identify mac line breaks
 PLUGINVERSION=`grep "Version:" $GITPATH/$MAINFILE | awk -F' ' '{print $NF}' | tr -d '\r'`
@@ -100,39 +100,34 @@ fi
 
 # GaryJ: Ignore check for git tag, as git flow release finish creates this.
 #if git show-ref --tags --quiet --verify -- "refs/tags/$PLUGINVERSION"
-#	then 
-#		echo "Version $PLUGINVERSION already exists as git tag. Exiting...."; 
-#		exit 1; 
+#	then
+#		echo "Version $PLUGINVERSION already exists as git tag. Exiting....";
+#		exit 1;
 #	else
 #		echo "Git version does not exist. Let's proceed..."
 #fi
 
 echo "Changing to $GITPATH"
 cd $GITPATH
-# GaryJ: Commit message variable not needed . Hard coded for SVN trunk commit for consistency.
-#echo -e "Enter a commit message for this new version: \c"
-#read COMMITMSG
-# GaryJ: git flow release finish already covers this commit.
-#git commit -am "$COMMITMSG"
 
-# GaryJ: git flow release finish already covers this tag creation.
-#echo "Tagging new version in git"
-#git tag -a "$PLUGINVERSION" -m "Tagging version $PLUGINVERSION"
-
-echo "Pushing git master to origin, with tags"
-git push origin master
-git push origin master --tags
-
-echo 
+echo
 echo "Creating local copy of SVN repo trunk ..."
 svn checkout $SVNURL $SVNPATH --depth immediates
 svn update --quiet $SVNPATH/trunk --set-depth infinity
 
-echo "Ignoring GitHub specific files"
-svn propset svn:ignore "README.md
-Thumbs.db
-.git
-.gitignore" "$SVNPATH/trunk/"
+echo
+echo "check .gitignore and .svnignore for files to ignore"
+echo
+
+SVNIGNORE=""
+GITIGNORE=""
+
+if [ -f $GITPATH.gitignore ]; then GITIGNORE=$(cat $GITPATH.gitignore); fi;
+if [ -f $GITPATH.svnignore ]; then SVNIGNORE=$(cat $GITPATH.svnignore); fi;
+
+svn propset svn:ignore ".git
+$GITIGNORE
+$SVNIGNORE" "$SVNPATH/trunk/"
 
 echo "Exporting the HEAD of master from git to the trunk of SVN"
 git checkout-index -a -f --prefix=$SVNPATH/trunk/
